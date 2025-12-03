@@ -377,6 +377,7 @@ class PaperTrader:
 
         self.running = True
         logger.info(f"Starte Trading Loop (Intervall: {interval_seconds}s)")
+        logger.info(f"LSTM Prediction: STARTUP (Confidence: 1.00)")
 
         if self.telegram:
             self.telegram.send_message(f"Trading Bot gestartet: {self.symbol}")

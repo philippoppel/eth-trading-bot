@@ -197,7 +197,9 @@ async def cmd_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 time_part = line.split(' ')[1][:5] if ' ' in line else "??:??"
 
                 # Prediction extrahieren
-                if 'Prediction: 0' in line:
+                if 'Prediction: STARTUP' in line:
+                    signal = "🚀 START"
+                elif 'Prediction: 0' in line:
                     signal = "🔴 DOWN"
                 elif 'Prediction: 1' in line:
                     signal = "⏸️ HOLD"
