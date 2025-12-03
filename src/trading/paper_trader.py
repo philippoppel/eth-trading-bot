@@ -129,7 +129,7 @@ class PaperTrader:
         pred = pred_class[0]
         confidence = probs[0].max()
 
-        logger.debug(f"LSTM Prediction: {pred} (Confidence: {confidence:.2f})")
+        logger.info(f"LSTM Prediction: {pred} (Confidence: {confidence:.2f})")
 
         # Signal generieren (Schwelle über Zufall 33%)
         if confidence < 0.4:
