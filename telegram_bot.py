@@ -172,10 +172,14 @@ async def cmd_trades(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def cmd_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Zeigt letzte Log-Einträge."""
-    log_file = PROJECT_ROOT / 'logs' / 'trading.log'
+    try:
+        log_file = PROJECT_ROOT / 'logs' / 'trading.log'
 
-    if log_file.exists():
-        with open(log_file, 'r') as f:
+        if not log_file.exists():
+            await update.message.reply_text("📜 Log-Datei nicht gefunden\n\nStarte erst den Trading Bot.")
+            return
+
+        with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()
 
         msg = "📜 <b>Letzte Entscheidungen</b>\n\n"
@@ -183,44 +187,45 @@ async def cmd_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Finde Prediction-Zeilen
         predictions = [l for l in lines if 'LSTM Prediction' in l][-5:]
 
+        if not predictions:
+            await update.message.reply_text("📜 Keine Entscheidungen gefunden\n\nWarte auf erste Prediction.")
+            return
+
         for line in predictions:
             try:
                 # Zeit extrahieren
-                time = line.split(' ')[1][:5]
+                time_part = line.split(' ')[1][:5] if ' ' in line else "??:??"
 
                 # Prediction extrahieren
                 if 'Prediction: 0' in line:
-                    signal = "🔴 DOWN (Sell)"
+                    signal = "🔴 DOWN"
                 elif 'Prediction: 1' in line:
-                    signal = "⏸️ SIDEWAYS (Hold)"
+                    signal = "⏸️ HOLD"
                 elif 'Prediction: 2' in line:
-                    signal = "🟢 UP (Buy)"
+                    signal = "🟢 UP"
                 else:
                     signal = "?"
 
                 # Confidence extrahieren
-                conf_start = line.find('Confidence: ') + 12
-                conf = line[conf_start:conf_start+4]
+                conf_start = line.find('Confidence: ')
+                if conf_start != -1:
+                    conf = line[conf_start + 12:conf_start + 16]
+                else:
+                    conf = "?"
 
-                msg += f"<code>{time}</code> {signal} ({conf})\n"
-            except:
-                pass
+                msg += f"<code>{time_part}</code> {signal} ({conf})\n"
+            except Exception:
+                continue
 
-        # Aktueller Preis
-        price_lines = [l for l in lines if 'ETH:' in l][-1:]
-        if price_lines:
-            try:
-                price_part = price_lines[0].split('ETH: $')[1].split(' ')[0]
-                msg += f"\n💰 Aktuell: <b>${price_part}</b>"
-            except:
-                pass
+        # Aktueller Preis aus Status-Datei
+        status = load_trading_status()
+        if status and 'current_price' in status:
+            msg += f"\n💰 Aktuell: <b>${status['current_price']:,.2f}</b>"
 
-        if not predictions:
-            msg = "📜 Keine Entscheidungen gefunden"
-    else:
-        msg = "📜 Log-Datei nicht gefunden"
+        await update.message.reply_text(msg, parse_mode='HTML')
 
-    await update.message.reply_text(msg, parse_mode='HTML')
+    except Exception as e:
+        await update.message.reply_text(f"❌ Fehler: {str(e)[:100]}")
 
 
 def main():
