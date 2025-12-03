@@ -43,6 +43,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/price - Aktueller ETH Preis\n"
         "/performance - Performance-Übersicht\n"
         "/trades - Letzte Trades\n"
+        "/logs - Letzte Entscheidungen\n"
         "/help - Diese Hilfe",
         parse_mode='HTML'
     )
@@ -169,6 +170,59 @@ async def cmd_trades(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(msg, parse_mode='HTML')
 
 
+async def cmd_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Zeigt letzte Log-Einträge."""
+    log_file = PROJECT_ROOT / 'logs' / 'trading.log'
+
+    if log_file.exists():
+        with open(log_file, 'r') as f:
+            lines = f.readlines()
+
+        msg = "📜 <b>Letzte Entscheidungen</b>\n\n"
+
+        # Finde Prediction-Zeilen
+        predictions = [l for l in lines if 'LSTM Prediction' in l][-5:]
+
+        for line in predictions:
+            try:
+                # Zeit extrahieren
+                time = line.split(' ')[1][:5]
+
+                # Prediction extrahieren
+                if 'Prediction: 0' in line:
+                    signal = "🔴 DOWN (Sell)"
+                elif 'Prediction: 1' in line:
+                    signal = "⏸️ SIDEWAYS (Hold)"
+                elif 'Prediction: 2' in line:
+                    signal = "🟢 UP (Buy)"
+                else:
+                    signal = "?"
+
+                # Confidence extrahieren
+                conf_start = line.find('Confidence: ') + 12
+                conf = line[conf_start:conf_start+4]
+
+                msg += f"<code>{time}</code> {signal} ({conf})\n"
+            except:
+                pass
+
+        # Aktueller Preis
+        price_lines = [l for l in lines if 'ETH:' in l][-1:]
+        if price_lines:
+            try:
+                price_part = price_lines[0].split('ETH: $')[1].split(' ')[0]
+                msg += f"\n💰 Aktuell: <b>${price_part}</b>"
+            except:
+                pass
+
+        if not predictions:
+            msg = "📜 Keine Entscheidungen gefunden"
+    else:
+        msg = "📜 Log-Datei nicht gefunden"
+
+    await update.message.reply_text(msg, parse_mode='HTML')
+
+
 def main():
     """Startet den Bot."""
     token = os.getenv('TELEGRAM_BOT_TOKEN')
@@ -191,6 +245,7 @@ def main():
     app.add_handler(CommandHandler("price", cmd_price))
     app.add_handler(CommandHandler("performance", cmd_performance))
     app.add_handler(CommandHandler("trades", cmd_trades))
+    app.add_handler(CommandHandler("logs", cmd_logs))
 
     # Bot starten
     app.run_polling(allowed_updates=Update.ALL_TYPES)
