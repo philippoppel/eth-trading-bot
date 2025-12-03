@@ -1,0 +1,55 @@
+# ETH Trading Bot Configuration
+
+trading:
+  symbol: "ETH/USDT"
+  timeframe: "15m"
+  initial_balance: 10000
+
+data:
+  lookback_days: 365  # 1 Jahr historische Daten
+  sequence_length: 60  # LSTM Input Sequenz
+
+features:
+  indicators:
+    - rsi_14
+    - macd
+    - bbands
+    - ema_9
+    - ema_21
+    - ema_50
+    - atr_14
+    - volume_sma_20
+
+model:
+  lstm:
+    hidden_size: 128
+    num_layers: 3
+    dropout: 0.3
+    learning_rate: 0.0005
+    epochs: 100
+    batch_size: 64
+    early_stopping_patience: 15
+
+  rl:
+    algorithm: "PPO"
+    total_timesteps: 500000
+    learning_rate: 0.0001
+    n_steps: 4096
+    batch_size: 128
+
+backtest:
+  fee_rate: 0.001  # 0.1%
+  slippage_rate: 0.0005  # 0.05%
+
+risk:
+  max_position_pct: 0.30  # 30% max Position
+  stop_loss_pct: 0.02  # 2% Stop Loss
+  take_profit_pct: 0.04  # 4% Take Profit
+  daily_loss_limit_pct: 0.03  # 3% Daily Loss
+  max_drawdown_pct: 0.10  # 10% Max Drawdown (Kill Switch)
+
+telegram:
+  enabled: true  # Aktiviert - Bot Token in .env eintragen
+  trade_alerts: true
+  daily_report: true
+  error_alerts: true

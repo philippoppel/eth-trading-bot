@@ -1,0 +1,33 @@
+# Environment
+.env
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Trained Models (users should train their own)
+models/*.pt
+models/*.zip
+models/best/
+models/checkpoints/
+
+# Data
+data/*.csv
+data/*.json
+
+# Logs
+logs/
+*.log
+nohup.out
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
